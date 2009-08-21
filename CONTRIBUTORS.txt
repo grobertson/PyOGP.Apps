@@ -1,0 +1,16 @@
+Pyogp is an open source collaboration between Linden Lab and the 
+Architecture Working Group (AWG) to support the development 
+of interoperable virtual worlds through the Open Grid Protocol.
+
+Links
+-----
+Project Documentation - http://wiki.secondlife.com/wiki/Pyogp
+Linden Lab - http://lindenlab.com
+Open Grid Protocol - http://wiki.secondlife.com/wiki/Open_Grid_Protocol
+AWG - http://wiki.secondlife.com/wiki/Architecture_Working_Group
+
+Contributors
+------------
+Aaron Terrell (Enus Linden), Linden Lab
+Everett Kotler (Kotler Linden), Linden Lab
+Joshua Bell (Josh Linden), Linden Lab
