@@ -24,6 +24,7 @@ import os
 version = '0.1'
 
 setup(name='apps',
+     dependency_links=['https://svn.secondlife.com/svn/linden/projects/2008/pyogp/pyogp.lib.base/tags/0.1/dist/'],
      version=version,
      description="basic pyogp apps package",
      long_description="skipping",
@@ -38,9 +39,10 @@ setup(name='apps',
      url='http://wiki.secondlife.com/wiki/Pyogp',
      license='Apache2',
      packages=find_packages(exclude=['ez_setup']),
-     include_package_data=True,
+     include_package_data=False,
      zip_safe=False,
      install_requires=[
          'setuptools',
+         'pyogp.lib.base'
          ]
      )

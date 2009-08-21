@@ -22,7 +22,6 @@ try:
         import uuid
         import pyogp.lib.base
         import eventlet
-        import indra.ipc
         import elementtree
         import indra.util
 
@@ -63,7 +62,6 @@ except:
             import uuid
             import pyogp.lib.base
             import eventlet
-            import indra.ipc
             import elementtree
             import indra.util
 
