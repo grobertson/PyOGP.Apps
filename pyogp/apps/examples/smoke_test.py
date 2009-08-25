@@ -199,7 +199,7 @@ class TestServer(unittest.TestCase):
         folder = matches.pop()
         def inventory_item_created(item):
             s.signal()
-        item_name = "Smoke Test notecard"
+        item_name = "Smoke Test notecard" + str(time.time())
         item_desc = "Smoke Test desc"
         client.inventory.create_new_item(folder,
                                          item_name,
@@ -218,12 +218,15 @@ class TestServer(unittest.TestCase):
         self.assertTrue(len(matches) > 0)
         item = matches.pop()
         api.sleep(5)
-        client.inventory.send_RemoveInventoryItem(client.agent_id,
-                                                  client.session_id,
-                                                  item.ItemID)
+        client.inventory.remove_inventory_item(item,
+                                               folder,
+                                               client.inventory.folders)
         #verify item removed
-        self.assertTrue(False)
-
+        client.inventory.sendFetchInventoryDescendentsRequest(folder.FolderID)
+        api.sleep(5)        
+        matches = client.inventory.search_inventory(client.inventory.folders,
+                                                    name=item_name)
+        self.assertTrue(len(matches) == 0)
         
     '''
     def test_wear_something(self):
