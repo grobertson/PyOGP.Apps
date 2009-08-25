@@ -73,8 +73,7 @@ def login():
     parser.add_option("-r", "--region", dest="region", default=None,
                       help="specifies the region (regionname/x/y/z) to connect to")
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
-                    help="enable verbose mode")
-
+                      help="enable verbose mode")
 
     (options, args) = parser.parse_args()
 
@@ -118,7 +117,7 @@ def login():
     # for folders whose parent = root folder aka My Inventory, request their contents
     [client.inventory._request_folder_contents(folder.FolderID) for folder in client.inventory.folders if folder.ParentID == client.inventory.inventory_root.FolderID]
     
-    api.sleep(5)
+    api.sleep(10)
     
     for attr in client.__dict__:
         print attr, ':\t\t\t',  client.__dict__[attr]
@@ -132,34 +131,6 @@ class TestServer(unittest.TestCase):
     def tearDown(self):
         api.sleep(3)
     
-    def test_walk(self):
-        """
-        Tests walking by walking for 5 seconds and verifying position change
-        """
-        old_pos = Vector3(X=client.Position.X,
-                          Y=client.Position.Y,
-                          Z=client.Position.Z)
-        client.walk()
-        api.sleep(5)
-        client.walk(False)
-        
-        self.assertFalse(client.Position.X == old_pos.X and \
-                         client.Position.Y == old_pos.Y and \
-                         client.Position.Z == old_pos.Z)
-
-    def test_fly(self):
-        """
-        Tests flying by flying for 5 seconds and verifying position change
-        """
-        old_pos = Vector3(X=client.Position.X,
-                          Y=client.Position.Y,
-                          Z=client.Position.Z)
-        client.fly()
-        api.sleep(5)
-        self.assertFalse(client.Position.X == old_pos.X and \
-                         client.Position.Y == old_pos.Y and \
-                         client.Position.Z == old_pos.Z)
-        client.fly(False)
                 
     def test_im(self):
         """
@@ -250,10 +221,9 @@ class TestServer(unittest.TestCase):
         client.inventory.send_RemoveInventoryItem(client.agent_id,
                                                   client.session_id,
                                                   item.ItemID)
-        #verify item removed by
-        matches = client.inventory.search_inventory(client.inventory.folders,
-                                                    name=item_name)
-        self.assertTrue(len(matches) == 0)
+        #verify item removed
+        self.assertTrue(False)
+
         
     '''
     def test_wear_something(self):
@@ -272,6 +242,20 @@ class TestServer(unittest.TestCase):
         #verify old pants
 
     '''
+    def test_can_walk(self):
+        """
+        Tests walking by walking for 5 seconds and verifying position change
+        """
+        old_pos = Vector3(X=client.Position.X,
+                          Y=client.Position.Y,
+                          Z=client.Position.Z)
+        client.walk()
+        api.sleep(5)
+        client.walk(False)
+        api.sleep(5)
+        self.assertFalse(client.Position.X == old_pos.X and \
+                         client.Position.Y == old_pos.Y and \
+                         client.Position.Z == old_pos.Z)
 
     def test_can_teleport(self):
         """
@@ -301,7 +285,7 @@ class TestServer(unittest.TestCase):
         """
         client.fly()
         client.up()
-        api.sleep(5)
+        api.sleep(3)
         old_pos = Vector3(X=client.Position.X,
                           Y=client.Position.Y,
                           Z=client.Position.Z)
@@ -315,7 +299,21 @@ class TestServer(unittest.TestCase):
                          new_pos.Y == old_pos.Y and \
                          new_pos.Z == old_pos.Z)
 
-    
+    def test_fly(self):
+        """
+        Tests flying by flying for 5 seconds and verifying position change
+        """
+        old_pos = Vector3(X=client.Position.X,
+                          Y=client.Position.Y,
+                          Z=client.Position.Z)
+        client.fly()
+        api.sleep(5)
+        self.assertFalse(client.Position.X == old_pos.X and \
+                         client.Position.Y == old_pos.Y and \
+                         client.Position.Z == old_pos.Z)
+        client.fly(False)
+
+
 if __name__=="__main__":
     
     client = login()    
