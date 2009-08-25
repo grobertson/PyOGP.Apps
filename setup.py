@@ -23,7 +23,7 @@ import os
 
 version = '0.1'
 
-setup(name='apps',
+setup(name='pyogp.apps',
      dependency_links=['https://svn.secondlife.com/svn/linden/projects/2008/pyogp/pyogp.lib.base/tags/0.1/dist/'],
      version=version,
      description="basic pyogp apps package",
