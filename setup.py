@@ -44,5 +44,30 @@ setup(name='pyogp.apps',
      install_requires=[
          'setuptools',
          'pyogp.lib.base'
-         ]
+         ],
+     entry_points={
+         'console_scripts': [
+             'AIS_inventory_handling = pyogp.lib.base.examples.AIS_inventory_handling:main',
+             'agent_login = pyogp.lib.base.examples.agent_login:main',
+             'agent_manager = pyogp.lib.base.examples.agent_manager:main',
+             'appearance_management = pyogp.lib.base.examples.appearance_management:main',
+             'chat_and_instant_messaging = pyogp.lib.base.examples.chat_and_instant_messaging:main',
+             'group_chat = pyogp.lib.base.examples.group_chat:main',
+             'group_creation = pyogp.lib.base.examples.group_creation:main',
+             'inventory_handling = pyogp.lib.base.examples.inventory_handling:main',
+             'inventory_transfer = pyogp.lib.base.examples.inventory_transfer:main',
+             'inventory_transfer_specify_agent = pyogp.lib.base.examples.inventory_transfer_specify_agent:main',
+             'login = pyogp.lib.base.examples.login:main',
+             'multi_region_connect = pyogp.lib.base.examples.multi_region_connect:main',
+             'object_create_edit = pyogp.lib.base.examples.object_create_edit:main',
+             'object_create_permissions = pyogp.lib.base.examples.object_create_permissions:main',
+             'object_create_rez_script = pyogp.lib.base.examples.object_create_rez_script:main',
+             'object_creation = pyogp.lib.base.examples.object_creation:main',
+             'object_properties = pyogp.lib.base.examples.object_properties:main',
+             'object_tracking = pyogp.lib.base.examples.object_tracking:main',
+             'parcel_management = pyogp.lib.base.examples.parcel_management:main',
+             'region_connect = pyogp.lib.base.examples.region_connect:main',
+             'smoke_test = pyogp.lib.base.examples.smoke_test:main',
+             ]
+        }
      )
