@@ -5,7 +5,7 @@ import re
 import setup_path
 
 # pyogp
-from pyogp.lib.base.login import Login, LegacyLoginParams
+from pyogp.lib.client.login import Login, LegacyLoginParams
 import getpass, sys, logging
 from optparse import OptionParser
 
@@ -14,7 +14,7 @@ def login():
 
     parser = OptionParser(usage="usage: %prog [options] firstname lastname")
 
-    logger = logging.getLogger("pyogp.lib.base.example")
+    logger = logging.getLogger("client.example")
 
     parser.add_option("-l", "--loginuri", dest="loginuri", default="https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
                       help="specified the target loginuri")

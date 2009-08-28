@@ -11,8 +11,8 @@ import setup_path
 from eventlet import api
 
 # pyogp
-from pyogp.lib.base.agent import Agent
-from pyogp.lib.base.settings import Settings
+from pyogp.lib.client.agent import Agent
+from pyogp.lib.client.settings import Settings
 from pyogp.lib.base.datatypes import UUID
 from pyogp.lib.base.utilities.enums import AssetType, WearablesIndex, \
      InventoryType
@@ -22,7 +22,7 @@ def login():
 
     parser = OptionParser(usage="usage: %prog [options] firstname lastname")
 
-    logger = logging.getLogger("pyogp.lib.base.example")
+    logger = logging.getLogger("client.example")
 
     parser.add_option("-l", "--loginuri", dest="loginuri", default="https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
                      help="specified the target loginuri")
