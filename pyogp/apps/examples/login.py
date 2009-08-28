@@ -1,9 +1,6 @@
 # standard
 import re
 
-# setup
-import setup_path
-
 # pyogp
 from pyogp.lib.client.login import Login, LegacyLoginParams
 import getpass, sys, logging

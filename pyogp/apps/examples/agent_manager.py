@@ -4,9 +4,6 @@ import sys
 import getpass, sys, logging
 from optparse import OptionParser
 
-# setup
-import setup_path
-
 # related
 from eventlet import api
 

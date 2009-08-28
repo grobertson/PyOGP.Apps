@@ -23,9 +23,6 @@ import getpass, sys, logging
 from optparse import OptionParser
 import time
 
-# setup
-import setup_path
-
 # pyogp
 from pyogp.lib.client.agent import Agent
 from pyogp.lib.base.utilities.enums import DeRezDestination, AssetType, \

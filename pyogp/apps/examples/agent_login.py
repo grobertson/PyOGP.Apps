@@ -1,9 +1,6 @@
 # standard
 import re
 
-# setup
-import setup_path
-
 # pyogp
 from pyogp.lib.client.agent import Agent
 import getpass, sys, logging
