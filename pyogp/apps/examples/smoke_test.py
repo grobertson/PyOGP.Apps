@@ -317,11 +317,12 @@ class TestServer(unittest.TestCase):
                          client.Position.Z == old_pos.Z)
         client.fly(False)
 
-
-if __name__=="__main__":
-    
+def main():    
     client = login()    
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(TestServer))
     unittest.TextTestRunner().run(suite)
     client.logout()
+
+if __name__=="__main__":
+    main()
