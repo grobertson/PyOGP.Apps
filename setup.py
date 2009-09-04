@@ -68,6 +68,7 @@ setup(name='pyogp.apps',
              'parse_packets = pyogp.apps.examples.parse_packets:main',
              'region_connect = pyogp.apps.examples.region_connect:main',
              'smoke_test = pyogp.apps.examples.smoke_test:main',
+             'chat = pyogp.apps.examples.chat_interface:main',
              ]
         }
      )
