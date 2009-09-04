@@ -11,7 +11,7 @@ from eventlet import api
 from pyogp.lib.client.agent import Agent
 from pyogp.lib.client.settings import Settings
 from pyogp.lib.client.groups import MockChatInterface
-from pyogp.lib.base.utilities.helpers import Helpers, Wait
+from pyogp.lib.base.helpers import Helpers, Wait
 
 
 def login():

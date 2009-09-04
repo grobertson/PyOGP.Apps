@@ -13,7 +13,7 @@ from pyogp.lib.client.settings import Settings
 from pyogp.lib.client.permissions import *
 
 # pyogp utilites
-from pyogp.lib.base.utilities.helpers import Wait
+from pyogp.lib.base.helpers import Wait
 
 
 def login():

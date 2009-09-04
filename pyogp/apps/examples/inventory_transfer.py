@@ -11,7 +11,7 @@ from eventlet import api
 from pyogp.lib.client.agent import Agent
 from pyogp.lib.client.agentmanager import AgentManager
 from pyogp.lib.client.settings import Settings
-from pyogp.lib.base.utilities.helpers import Wait
+from pyogp.lib.base.helpers import Wait
 
 
 def login():

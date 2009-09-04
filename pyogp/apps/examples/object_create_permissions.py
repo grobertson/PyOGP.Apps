@@ -12,7 +12,7 @@ from pyogp.lib.client.agent import Agent
 from pyogp.lib.client.settings import Settings
 
 # pyogp utilites
-from pyogp.lib.base.utilities.helpers import Wait
+from pyogp.lib.base.helpers import Wait
 
 object_names = ['Alpha','Bravo','Charlie','Delta','Echo','Foxtrot']
 
