@@ -18,8 +18,7 @@ $/LicenseInfo$
 
 # standard
 import unittest
-import re
-import getpass, sys, logging
+import getpass, logging
 from optparse import OptionParser
 import time
 
@@ -41,17 +40,12 @@ class Semaphore(object):
     waiting = True
     timed_out = False
     
-    def wait(self):
-        while self.waiting:
-            api.sleep(0)
-        self.waiting = True
-
-    def wait(self, time_out):
+    def wait(self, time_out=0):
         start = now = time.time()
-        while self.waiting and now - start < time_out:
+        while self.waiting and now - start <= time_out:
             api.sleep(0)
             now = time.time()
-        if now - start >= time_out:
+        if now - start > time_out:
             self.timed_out = True
         self.waiting = True
         
@@ -65,12 +59,13 @@ def login():
 
     logger = logging.getLogger("client.example")
 
-    parser.add_option("-l", "--loginuri", dest="loginuri", default="https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
+    parser.add_option("-l", "--loginuri", dest="loginuri",
+                      default="https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
                       help="specified the target loginuri")
     parser.add_option("-r", "--region", dest="region", default=None,
                       help="specifies the region (regionname/x/y/z) to connect to")
-    parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
-                      help="enable verbose mode")
+    parser.add_option("-q", "--quiet", dest="verbose", default=True,
+                      action="store_false", help="enable verbose mode")
     parser.add_option("-p", "--password", dest="password", default=None,
                       help="specifies password instead of being prompted for one")
     (options, args) = parser.parse_args()
@@ -100,12 +95,9 @@ def login():
     else:
         password = getpass.getpass()
 
-    #First, initialize the agent
-    global client
-    #client = Agent()
-
     # Now let's log it in
-    client.login(options.loginuri, args[0], args[1], password, start_location = options.region)
+    client.login(options.loginuri, args[0], args[1], password,
+                 start_location=options.region)
 
     # wait for the agent to connect
     while client.connected == False:
@@ -116,7 +108,9 @@ def login():
         api.sleep(0)
 
     # for folders whose parent = root folder aka My Inventory, request their contents
-    [client.inventory._request_folder_contents(folder.FolderID) for folder in client.inventory.folders if folder.ParentID == client.inventory.inventory_root.FolderID]
+    [client.inventory._request_folder_contents(folder.FolderID) \
+     for folder in client.inventory.folders if folder.ParentID == \
+     client.inventory.inventory_root.FolderID]
     
     api.sleep(10)
     
@@ -324,5 +318,5 @@ def main():
     unittest.TextTestRunner().run(suite)
     client.logout()
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
