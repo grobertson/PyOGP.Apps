@@ -21,18 +21,19 @@ from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 
 #from pyogp.lib.client.login import Login, LegacyLoginParams
 
-def __getattr__(self, login_method):
-    print login_method
     
 def legacy_login_proxy():
 
     login_server = SimpleXMLRPCServer(("localhost", 8080),
                                       requestHandler=SimpleXMLRPCRequestHandler)
+    login_server.serve_forever()
 
-    login_server.register(__getattr__)
-    login_server.server_forever()
-
-
+server = xmlrpclib.ServerProxy('https://login.aditi.lindenlab.com/cgi-bin/login.cgi')
+"""
+print server
+handler = server.__getattr__('login_to_simulator')
+handler()
+"""
 def main():
     legacy_login_proxy()
 
