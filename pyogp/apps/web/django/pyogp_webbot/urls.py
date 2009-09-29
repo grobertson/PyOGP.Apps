@@ -14,6 +14,7 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     # (r'^admin/', include(admin.site.urls)),
+    (r'^$', 'pyogp_webbot.login.views.index'),
     (r'^pyogp_webbot/$', 'pyogp_webbot.login.views.index'),
     (r'^pyogp_webbot/login/$', 'pyogp_webbot.login.views.login'),
     (r'^pyogp_webbot/login/login_request/$', 'pyogp_webbot.login.views.login_request'),
