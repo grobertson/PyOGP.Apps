@@ -13,7 +13,7 @@ from eventlet import api
 import time
 
 def index(request):
-    return login(request, kwargs)
+    return render_to_response('index.html')
 
 def login(request, firstname = None, lastname = None, error_message = None):
     #return HttpResponse('goddamn svn ci sucks ass')
