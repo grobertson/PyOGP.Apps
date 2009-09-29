@@ -69,7 +69,7 @@ setup(name='pyogp.apps',
              'region_connect = pyogp.apps.examples.region_connect:main',
              'smoke_test = pyogp.apps.examples.smoke_test:main',
              'chat = pyogp.apps.examples.chat_interface:main',
-	     'webbot = pyogp.apps.web.django.pyogp_webbot:main',
+	     'webbot = pyogp.apps.web.django.pyogp_webbot.manage:main',
              ]
         }
      )
