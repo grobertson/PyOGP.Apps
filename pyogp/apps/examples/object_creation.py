@@ -25,6 +25,8 @@ def login():
 #http://ec2-75-101-203-98.compute-1.amazonaws.com:9000
    parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                    help="enable verbose mode")
+   parser.add_option("-p", "--password", dest="password", default=None,
+                     help="specifies password instead of being prompted for one")
 
 
    (options, args) = parser.parse_args()
