@@ -25,6 +25,8 @@ def login():
                       help="specifies the region (regionname/x/y/z) to connect to")
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")
+    parser.add_option("-p", "--password", dest="password", default=None,
+                      help="specifies password instead of being prompted for one")
 
 
     (options, args) = parser.parse_args()
@@ -49,7 +51,10 @@ def login():
     # example from a pure agent perspective
 
     #grab a password!
-    password = getpass.getpass()
+    if options.password:
+        password = options.password
+    else:
+        password = getpass.getpass()
 
     # let's disable inventory handling for this example
     settings = Settings()

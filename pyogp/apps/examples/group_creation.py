@@ -25,7 +25,8 @@ def login():
                       help="specifies the region (regionname/x/y/z) to connect to")
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                     help="enable verbose mode")
-
+    parser.add_option("-p", "--password", dest="password", default=None,
+                      help="specifies password instead of being prompted for one")
 
     (options, args) = parser.parse_args()
 
@@ -50,7 +51,11 @@ def login():
 
     print "Attention: Creating a group will cost you 100 Lindens. Stop now if you don't like the sound of that."
     #grab a password!
-    password = getpass.getpass()
+    #grab a password!
+    if options.password:
+        password = options.password
+    else:
+        password = getpass.getpass()
 
     # let's disable inventory handling for this example
     settings = Settings()

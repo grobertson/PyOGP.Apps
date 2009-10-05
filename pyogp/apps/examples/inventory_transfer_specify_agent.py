@@ -29,6 +29,8 @@ def login():
                     help="enable verbose mode")
     parser.add_option("-t", "--to_agent_id", dest="to_agent_id", default=None, help="agent id to offer inventory to (required)")
     parser.add_option("-s", "--search", dest="search", default=None, help = "name of inventory item to search for and transfer to account number 2")
+    parser.add_option("-p", "--password", dest="password", default=None,
+                      help="specifies password instead of being prompted for one")
 
     (options, args) = parser.parse_args()
 
@@ -64,7 +66,10 @@ def login():
     settings.MULTIPLE_SIM_CONNECTIONS = False
 
     #grab a password!
-    password = getpass.getpass()
+    if options.password:
+        password = options.password
+    else:
+        password = getpass.getpass()
 
     #First, initialize the agent
     client = Agent(settings = settings)

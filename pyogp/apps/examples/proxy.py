@@ -16,26 +16,101 @@ or in
 $/LicenseInfo$
 """
 
-from SimpleXMLRPCServer import SimpleXMLRPCServer
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+from logging import getLogger
 
-#from pyogp.lib.client.login import Login, LegacyLoginParams
+import re
+from webob import Request, Response
+from wsgiref.simple_server import make_server
+import xmlrpclib
+import urllib2
 
-    
-def legacy_login_proxy():
+from indra.base import llsd
 
-    login_server = SimpleXMLRPCServer(("localhost", 8080),
-                                      requestHandler=SimpleXMLRPCRequestHandler)
-    login_server.serve_forever()
+from pyogp.lib.base.network.stdlib_client import StdLibClient, HTTPError
+from pyogp.lib.client.login import Login
 
-server = xmlrpclib.ServerProxy('https://login.aditi.lindenlab.com/cgi-bin/login.cgi')
-"""
-print server
-handler = server.__getattr__('login_to_simulator')
-handler()
-"""
+# initialize globals
+logger = getLogger('pyogp.lib.client.login')
+DEBUG = 1
+
+class LoginProxy(object):
+    """ """
+
+    def __init__(self, loginuri, restclient = None):
+
+        self.loginuri = loginuri
+        self.login_handler = Login()
+
+        if restclient == None: 
+            self.restclient = StdLibClient() 
+        else:
+            self.restclient = restclient
+
+        print "Initialized the login proxy for %s" % self.loginuri
+
+    def __call__(self, environ, start_response):
+
+        self.environ = environ
+        self.start = start_response
+
+        self.request = Request(environ)
+
+        self.response = Response()
+
+        try:
+            login_params = xmlrpclib.loads(self.request.body)
+
+            response = self.login_handler._post_to_legacy_loginuri(self.loginuri, login_params = login_params[0][0], login_method = login_params[1], proxied = True)
+
+            print response['sim_ip']
+            print response['sim_port']
+            print response['seed_capability']
+
+            tuple_response = tuple([response])
+            self.response.body = xmlrpclib.dumps(tuple_response)
+
+            return self.response(environ, start_response)
+
+        except Exception, e:
+            #start_response('404', [('Content-Type', 'text/html')])
+            print e
+
+            return self.response(environ, start_response)
+
 def main():
-    legacy_login_proxy()
 
-if __name__ == "__main__":
+    print "i'm only proxying logins right now, stay tuned for more fun soon!"
+
+    import optparse
+
+    parser = optparse.OptionParser(
+        usage='%prog --port=PORT'
+        )
+    parser.add_option(
+        '-p', '--port',
+        default='8080',
+        dest='port',
+        type='int',
+        help='Port to serve on (default 8080)')
+    parser.add_option(
+        '--loginuri',
+        default='https://login.aditi.lindenlab.com/cgi-bin/login.cgi',
+        dest='loginuri',
+        help='Specifies the target loginuri to connect proxy to')
+
+    options, args = parser.parse_args()
+
+    app = LoginProxy(options.loginuri)
+
+    httpd = make_server('localhost', options.port, app)
+
+    print 'Serving login requests on https://localhost:%s' % options.port
+
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print '^C'
+
+if __name__=="__main__":
     main()
+
