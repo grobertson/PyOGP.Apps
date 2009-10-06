@@ -24,7 +24,7 @@ import time
 
 # pyogp
 from pyogp.lib.client.agent import Agent
-from pyogp.lib.base.utilities.enums import DeRezDestination, AssetType, \
+from pyogp.lib.client.enums import DeRezDestination, AssetType, \
      InventoryType, WearablesIndex
 from pyogp.lib.base.datatypes import UUID, Vector3
 
