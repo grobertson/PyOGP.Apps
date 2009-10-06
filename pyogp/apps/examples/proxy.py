@@ -107,9 +107,9 @@ class ViewerProxyApp(object):
 
             udp_proxy = UDPProxy(sim_ip, sim_port, self.proxy_port_seed)
 
-            # swap out the udp ip:port with local ones
-            response['sim_ip'] = '127.0.0.1'
-            response['sim_port'] = udp_proxy.proxy_port
+            # uncomment me to swap out the udp ip:port with local ones
+            #response['sim_ip'] = '127.0.0.1'
+            #response['sim_port'] = udp_proxy.proxy_port
 
             tuple_response = tuple([response])
             self.response.body = xmlrpclib.dumps(tuple_response)
