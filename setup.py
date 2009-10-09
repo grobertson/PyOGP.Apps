@@ -68,11 +68,12 @@ setup(name='pyogp.apps',
              'parse_packets = pyogp.apps.examples.parse_packets:main',
              'region_connect = pyogp.apps.examples.region_connect:main',
              'smoke_test = pyogp.apps.examples.smoke_test:main',
-             'chat = pyogp.apps.examples.chat_interface:main',
+             
              ]
         }
      )
 
-# extra entry points that aren'yt ready for use...
-            'webbot = pyogp.apps.web.django.pyogp_webbot.manage:main',
-            'proxy = pyogp.apps.examples.proxy:main',
+# extra entry points that aren't ready for use...
+#            'webbot = pyogp.apps.web.django.pyogp_webbot.manage:main',
+#            'proxy = pyogp.apps.examples.proxy:main',
+#           'chat = pyogp.apps.examples.chat_interface:main',
