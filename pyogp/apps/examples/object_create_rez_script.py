@@ -11,7 +11,7 @@ from eventlet import api
 from pyogp.lib.client.agent import Agent
 from pyogp.lib.client.settings import Settings
 from pyogp.lib.base.datatypes import UUID
-from pyogp.lib.base.utilities.enums import AssetType, WearablesIndex, \
+from pyogp.lib.client.enums import AssetType, WearablesIndex, \
      InventoryType
 
 def login():
@@ -28,7 +28,7 @@ def login():
 #http://ec2-75-101-203-98.compute-1.amazonaws.com:9000
     parser.add_option("-q", "--quiet", dest="verbose", default=True, action="store_false",
                    help="enable verbose mode")
-   parser.add_option("-p", "--password", dest="password", default=None,
+    parser.add_option("-p", "--password", dest="password", default=None,
                      help="specifies password instead of being prompted for one")
 
 
@@ -99,12 +99,25 @@ def login():
     folder = matches.pop()
 
     #Creates a new script in the scripts folder and the callback will upload the script asset
-    #Change the file dir and name for your own file
+    script = \
+"""
+default
+{
+    state_entry()
+    {
+        llSay(0, "Hello, PyBOT!");
+    }
+
+    touch_start(integer total_number)
+    {
+        llSay(0, "PyBOT says Hi.");
+    }
+}
+"""    
     client.inventory.create_new_item(folder, "TestLSL1", "created by PyOGP",
                                      AssetType.LSLText, InventoryType.LSL,
                                      WearablesIndex.WT_SHAPE, 0,
-                                     lambda item : client.asset_manager.upload_script_via_caps(item.ItemID, 
-                                                                                               "/home/kotler/pyogp/libdev/apps/examples/hello.lsl")) 
+                                     lambda item : client.asset_manager.upload_script_via_caps(item.ItemID, script)) 
 
     #Finds our script in the inventory
     api.sleep(5)
@@ -125,6 +138,8 @@ def login():
 
     #rezzes a prim, and automatically selects it
     client.region.objects.create_default_box(GroupID = client.ActiveGroupID)
+    
+    
     
     while client.running:
         api.sleep(0)
