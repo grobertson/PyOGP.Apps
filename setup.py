@@ -26,7 +26,7 @@ version = '0.1'
 setup(name='pyogp.apps',
      version=version,
      description="basic pyogp apps package",
-     long_description="skipping",
+     long_description=open('README.txt').read(),
      # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
      classifiers=[
        "Programming Language :: Python",
@@ -37,9 +37,9 @@ setup(name='pyogp.apps',
      author_email='pyogp@lists.lindenlab.com',
      url='http://wiki.secondlife.com/wiki/Pyogp',
      license='Apache2',
-     #packages=find_packages(exclude=['ez_setup']),
-     packages=['pyogp.apps'],
+     packages=find_packages(exclude=['ez_setup']),
      include_package_data=False,
+     namespace_packages=['pyogp'],
      zip_safe=False,
      install_requires=[
          'setuptools',
