@@ -43,7 +43,7 @@ setup(name='pyogp.apps',
      zip_safe=False,
      install_requires=[
          'setuptools',
-         'pyogp.lib.client'
+         'pyogp.lib.client==0.1dev'
          ],
      entry_points={
          'console_scripts': [
