@@ -110,9 +110,10 @@ def login():
         print "Attention: This script will print nothing if you use -q. So it might be boring to use it like that ;-)"
 
     for client in clients:
-        cmd = "python %s --password=%s %s %s" % (executable, client[2], client[0], client[1])
+        py = sys.executable
+        cmd = "%s %s --password=%s %s %s" % (py, executable, client[2], client[0], client[1])
         print "running '%s'" % (cmd)
-        subprocess.Popen(cmd)
+        subprocess.Popen(cmd, shell=True)
 
     '''
     # prep instance settings
