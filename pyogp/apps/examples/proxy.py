@@ -16,16 +16,15 @@ or in
 $/LicenseInfo$
 """
 
-from logging import getLogger
-
 # standard modules
+import copy
+import logging
+import optparse
+import socket
+import traceback
 from webob import Request, Response
 from wsgiref.simple_server import make_server
 import xmlrpclib
-import traceback
-import optparse
-import copy
-import socket
 
 # related
 from indra.base import llsd
@@ -35,55 +34,141 @@ from eventlet import api
 from pyogp.lib.base.network.stdlib_client import StdLibClient, HTTPError
 from pyogp.lib.base.message.circuit import Host
 from pyogp.lib.base.network.net import NetUDPClient
+from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 
 # pyogp.lib.client
 from pyogp.lib.client.login import Login
 
 # initialize globals
-logger = getLogger('pyogp.lib.client.login')
-DEBUG = 1
+logger = logging.getLogger('pyogp.apps.examples.proxy')
 
 
 class UDPProxy(object):
     """ proxies a Second Life viewer's UDP connection to a region """
 
-    def __init__(self, sim_ip, sim_port, proxy_port):
-        """ initialize a UDP proxy """
-
-        self.target_sim_ip = sim_ip
-        self.target_sim_port = sim_port
+    def __init__(self, sim_ip, sim_port):
+        """ initialize a UDP proxy, mapping 2 ports to a single outbound port """
+    
+        self.target_host = Host((sim_ip, sim_port))
+        self.local_host = None
 
         # the outgoing connection to the grid
-        self.udp_client = NetUDPClient()  # the sender, what we are proxying the target to 
-        self.socket = self.udp_client.start_udp_connection()
-        
-        self.proxy_port = proxy_port      
-        self.socket.bind((socket.gethostname(), proxy_port))
+        self.server_facing_udp_client = NetUDPClient()  # the sender, what we are proxying the target to 
+        self.server_facing_socket = self.server_facing_udp_client.start_udp_connection()
 
-        self.start_udp_proxy()
+        # the local connection for the client
+        self.viewer_facing_udp_client = NetUDPClient()  # the sender, what we are proxying the target to 
+        self.viewer_facing_socket = self.viewer_facing_udp_client.start_udp_connection()
 
-        # the viewer's connection to localhost
-        self.host = Host((self.target_sim_ip, self.target_sim_port))
+        logger.debug("Building socket pair for %s udp proxy" % (self.target_host))
 
-        print 'Initializing a UDP proxy. Target IP: %s is proxied to %s' % (self.host, '127.0.0.1:%s' % (self.proxy_port))
+    def pin_udp_proxy_ports(self, viewer_facing_port, server_facing_port):
 
-    def start_udp_proxy(self):
+        try:
 
-        pass
+            self.local_host = Host(('127.0.0.1', viewer_facing_port))
 
+            # tell the sim_socket to be on a specific port
+            logger.debug("Binding server_facing_socket to port %s" % (server_facing_port))
+            self.server_facing_socket.bind((socket.gethostname(), server_facing_port))
+
+            # tell the local_socket to be on a specific port
+            logger.debug("Binding viewer_facing_socket to port %s" % (viewer_facing_port))
+            self.viewer_facing_socket.bind((socket.gethostname(), viewer_facing_port))
+
+        except Exception, e:
+            raise
+
+    def start_proxy(self):
+
+        logger.debug("Starting proxies in UDPProxy")
+
+        self._is_running = True
+
+        while self._is_running:
+
+            api.sleep(0)
+
+            self._send_viewer_to_sim()
+            self._receive_sim_to_viewer()
+
+    def _send_viewer_to_sim(self):
+
+        logger.debug("Checking for msgs from viewer")
+
+        msg_buf, msg_size = self.viewer_facing_udp_client.receive_packet(self.viewer_facing_socket)
+
+        if msg_size > 0:
+            logger.debug("Sending stuff! %s %s" % (len(msg_buf), msg_size))
+            self.server_facing_udp_client.send_packet(self.server_facing_socket, msg_buf, self.target_host)
+
+    def _receive_sim_to_viewer(self):
+
+        logger.debug("Checking for msgs from server")
+
+        msg_buf, msg_size = self.server_facing_udp_client.receive_packet(self.server_facing_socket)
+
+        if msg_size > 0:
+            logger.debug("Receiving stuff! %s %s" % (len(msg_buf), msg_size))
+            self.viewer_facing_udp_client.send_packet(self.viewer_facing_socket, msg_buf, self.local_host)
 
 class ViewerProxyApp(object):
     """ proxies a login request from a Second Life viewer """
 
-    def __init__(self, loginuri, proxy_port_seed):
+    def __init__(self, loginuri, port, proxy_port_seed, proxy_udp=True, proxy_caps=False):
 
         self.loginuri = loginuri
+        self.login_port = port
+        self.proxy_port_seed = proxy_port_seed
+        
+        self.proxy_udp = proxy_udp
+        self.proxy_caps = proxy_caps
+
+        self._is_running = True
+
+        # initialize the login request
+        #self.proxy_login()
+
+
+    def start_udp_proxy(self, sim_ip, sim_port):
+
+        logger.debug("ViewerProxyApp is spawning UDP proxies for %s:%s" % (sim_ip, sim_port))
+
+        viewer_facing_port = self.proxy_port_seed
+        server_facing_port = self.proxy_port_seed + 1
+        self.proxy_port_seed += 2
+
+        udp_proxy = UDPProxy(sim_ip, sim_port)
+        udp_proxy.pin_udp_proxy_ports(viewer_facing_port, server_facing_port)
+        
+        api.spawn(udp_proxy.start_proxy)
+
+        return '127.0.0.1', viewer_facing_port
+
+    def proxy_login(self):
+
+        # init the login proxy
+        login_proxy = LoginHandler(self)
+        httpd = make_server('127.0.0.1', self.login_port, login_proxy)
+
+        try:
+            httpd.handle_request()
+        except KeyboardInterrupt:
+            print '^C'
+        except:
+            traceback.print_exc()
+
+class LoginHandler(object):
+
+    def __init__(self, caller):
+
+        self.caller = caller
+        self.loginuri = self.caller.loginuri
+        self.port = self.caller.login_port
+
         self.login_handler = Login()
 
-        self.proxy_port_seed = proxy_port_seed
-        self.ports = []
-
-        print "Initialized the login proxy for %s" % self.loginuri
+        logger.info("Proxying login requests for %s on https://127.0.0.1:%s" % (self.loginuri, self.port))
 
     def __call__(self, environ, start_response, ):
 
@@ -99,17 +184,23 @@ class ViewerProxyApp(object):
 
             response = self.login_handler._post_to_legacy_loginuri(self.loginuri, login_params = login_params[0][0], login_method = login_params[1], proxied = True)
 
-            sim_ip = copy.copy(response['sim_ip'])  # swap out with localhost
-            sim_port = copy.copy(response['sim_port'])  # swap out with a local port
-            seed_cap = copy.copy(response['seed_capability'])   # swap out the seed cap with a localhost url
+            #logger.debug("Login response is: %s" % (response))
 
-            proxy_port = self.proxy_port_seed + len(self.ports)
+            if response['login'] == 'true':
+                sim_ip = copy.copy(response['sim_ip'])  # swap out with localhost
+                sim_port = copy.copy(response['sim_port'])  # swap out with a local port
+                seed_cap = copy.copy(response['seed_capability'])   # swap out the seed cap with a localhost url
 
-            udp_proxy = UDPProxy(sim_ip, sim_port, self.proxy_port_seed)
-
-            # uncomment me to swap out the udp ip:port with local ones
-            #response['sim_ip'] = '127.0.0.1'
-            #response['sim_port'] = udp_proxy.proxy_port
+                if self.caller.proxy_udp:
+                    # get ports from the calling app to replace in the login response to the viewer
+                    (local_ip, local_port) = self.caller.start_udp_proxy(sim_ip, sim_port)
+                    
+                    response['sim_ip'] = local_ip
+                    response['sim_port'] = local_port
+                
+                if self.caller.proxy_caps:
+                    response['seed_capability'] = "http://%s:%s" % (local_seed_cap_host.ip, local_seed_cap_host.port)
+                    
 
             tuple_response = tuple([response])
             self.response.body = xmlrpclib.dumps(tuple_response)
@@ -117,14 +208,13 @@ class ViewerProxyApp(object):
             return self.response(environ, start_response)
 
         except Exception, e:
-
-            print e
-
+            logger.error(e)
+            traceback.print_exc()
             return self.response(environ, start_response)
 
 def main():
 
-    print "i'm only proxying logins right now, stay tuned for more fun soon!"
+    logger.debug("This script is only proxying logins right now.")
 
     parser = optparse.OptionParser(
         usage='%prog --port=PORT'
@@ -149,19 +239,22 @@ def main():
 
     options, args = parser.parse_args()
 
-    # init the login proxy
-    viewer_proxy = ViewerProxyApp(options.loginuri, options.proxy_port_seed)
+    # init logging
+    console = logging.StreamHandler()
+    console.setLevel(logging.DEBUG) # seems to be a no op, set it for the logger
+    formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
+    logging.getLogger('').setLevel(logging.DEBUG)
 
-    httpd = make_server('localhost', options.port, viewer_proxy)
+    # init the viewer proxy
+    viewer_proxy = ViewerProxyApp(options.loginuri, options.port, options.proxy_port_seed)
 
-    print 'Serving login requests on https://localhost:%s' % options.port
+    api.spawn(viewer_proxy.proxy_login)
 
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print '^C'
-    except:
-        traceback.print_exc()
+    while viewer_proxy._is_running:
+        api.sleep(5)
+        logger.debug("in main")
 
 if __name__=="__main__":
     main()
