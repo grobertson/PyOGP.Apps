@@ -22,6 +22,7 @@ import logging
 import optparse
 import random
 import signal
+import sys
 import traceback
 from webob import Request, Response
 from wsgiref.simple_server import make_server
@@ -32,6 +33,7 @@ from indra.base import llsd
 from eventlet import api
 
 # pyogp.lib.base
+from pyogp.lib.base.caps_proxy import CapabilitiesProxy
 from pyogp.lib.base.message.udpproxy import UDPProxy
 
 # pyogp.lib.client
@@ -43,35 +45,76 @@ logger = logging.getLogger('pyogp.apps.examples.proxy')
 class ViewerProxyApp(object):
     """ proxies a login request from a Second Life viewer """
 
-    def __init__(self, loginuri, port, proxy_udp=True, proxy_caps=False):
+    def __init__(self, loginuri, login_port, proxy_udp=True, proxy_caps=True):
 
         self.loginuri = loginuri
-        self.login_port = port
+        self.login_port = login_port
         
         self.proxy_udp = proxy_udp
         self.proxy_caps = proxy_caps
 
         self._is_running = True
 
-        # signal handler to capture erm signals
-        self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
-
-        # initialize the login request
-        #self.proxy_login()
-
+        # let the login req proxy handle the first signal
+        self.signal_handler = None
 
     def start_udp_proxy(self, sim_ip, sim_port):
 
+        # signal handler to capture erm signals
+        if not self.signal_handler:
+            self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
+
         logger.debug("ViewerProxyApp is spawning UDP proxies for %s:%s" % (sim_ip, sim_port))
 
-        viewer_facing_port = random.randrange(14000, 15000)
-        server_facing_port = random.randrange(14000, 15000)
+        viewer_facing_port = random.randrange(14001, 15000)
+        server_facing_port = random.randrange(15001, 16000)
 
         self.udp_proxy = UDPProxy(sim_ip, sim_port, viewer_facing_port, server_facing_port)
         
         api.spawn(self.udp_proxy.start_proxy)
 
         return self.udp_proxy.hostname, self.udp_proxy.proxy_socket.getsockname()[1]
+
+    def start_caps_proxy(self, seed_cap_url, caps_proxy_port=None):
+
+        # signal handler to capture erm signals
+        if not self.signal_handler:
+            self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
+        
+        logger.debug("ViewerProxyApp is spawning caps proxies for region with\
+                        seed_capability of %s" % (seed_cap_url))
+
+        if not caps_proxy_port:
+            caps_proxy_port = random.randrange(16001, 17001)
+
+        self.caps_proxy = CapabilitiesProxy(seed_cap_url, '127.0.0.1', caps_proxy_port)
+
+        api.spawn(self.start_caps_proxy_service, '127.0.0.1', caps_proxy_port, self.caps_proxy)
+
+        return '127.0.0.1', caps_proxy_port, self.caps_proxy.proxy_map[seed_cap_url]
+
+    def start_caps_proxy_service(self, caps_proxy_ip, caps_proxy_port, app):
+
+        httpd = make_server(caps_proxy_ip, caps_proxy_port, self.caps_proxy)
+        
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            sys.exit()
+        except:
+            traceback.print_exc()
+        '''
+        
+        while self._is_running:
+            api.sleep(0)
+            try:
+                httpd.handle_request()
+            except KeyboardInterrupt:
+                sys.exit()
+            except:
+                traceback.print_exc()
+        '''
+
 
     def proxy_login(self):
 
@@ -82,15 +125,17 @@ class ViewerProxyApp(object):
         try:
             httpd.handle_request()
         except KeyboardInterrupt:
-            print '^C'
+            sys.exit()
         except:
             traceback.print_exc()
 
     def sigint_handler(self, signal_sent, frame):
         """ catches terminal signals (Ctrl-C) to kill running client instances """
 
-        logger.info("Caught signal... %d. Stopping" % signal_sent)
-        self.udp_proxy._is_running = False
+        logger.warning("Caught signal... %d. Stopping" % signal_sent)
+        
+        if hasattr(self, 'udp_proxy'):
+            self.udp_proxy._is_running = False
         self._is_running = False
 
 class LoginHandler(object):
@@ -136,7 +181,8 @@ class LoginHandler(object):
                     #logger.debug("Replacing login response sim_ip:sim_port %s:%s with proxy of %s:%s" %  (sim_ip, sim_port, response['sim_ip'], response['sim_port']))
                 
                 if self.caller.proxy_caps:
-                    response['seed_capability'] = "http://%s:%s" % (local_seed_cap_host.ip, local_seed_cap_host.port)
+                    (local_ip, local_port, path) = self.caller.start_caps_proxy(seed_cap)
+                    response['seed_capability'] = "http://%s:%s/%s" % (local_ip, local_port, path)
                     
             logger.debug("Transformed login response is: %s" % (response))
 
@@ -160,7 +206,7 @@ def main():
     parser.add_option(
         '--port',
         default='8080',
-        dest='port',
+        dest='login_port',
         type='int',
         help='Port to serve on (default 8080)')
     parser.add_option(
@@ -168,19 +214,39 @@ def main():
         default='https://login.aditi.lindenlab.com/cgi-bin/login.cgi',
         dest='loginuri',
         help='Specifies the target loginuri to connect proxy to')
+    parser.add_option(
+        '-v', '--verbose',
+        default=False,
+        dest='verbose',
+        action="store_true",
+        help='enables logging, sets logging level to info, logs names of all \
+            packets')
+    parser.add_option(
+        '-V', '--verboseverbose',
+        default=False,
+        dest='verboseverbose',
+        action="store_true",
+        help='enables logging, sets logging level to debug, logs contents \
+            of all packets')
 
     options, args = parser.parse_args()
 
     # init logging
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG) # seems to be a no op, set it for the logger
-    formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
-    console.setFormatter(formatter)
-    logging.getLogger('').addHandler(console)
-    logging.getLogger('').setLevel(logging.DEBUG)
+    if options.verbose or options.verboseverbose:
+        console = logging.StreamHandler()
+        console.setLevel(logging.DEBUG) # seems to be a no op, set it for the logger
+        formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
+        console.setFormatter(formatter)
+        logging.getLogger('').addHandler(console)
+        if options.verbose:
+            logging.getLogger('').setLevel(logging.INFO)
+        elif options.verboseverbose:
+            logging.getLogger('').setLevel(logging.DEBUG)
+        else:
+            logging.getLogger('').setLevel(logging.WARNING)
 
     # init the viewer proxy
-    viewer_proxy = ViewerProxyApp(options.loginuri, options.port)
+    viewer_proxy = ViewerProxyApp(options.loginuri, options.login_port)
 
     api.spawn(viewer_proxy.proxy_login)
 
