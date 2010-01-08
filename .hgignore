@@ -1,0 +1,8 @@
+#use glob syntax
+syntax: glob
+
+.hgignore
+*.pyc
+build/*
+pyogp.apps.egg-info/*
+dist/*

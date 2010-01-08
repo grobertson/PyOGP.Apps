@@ -1,0 +1,12 @@
+<h1>PyOGP Login</h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+<form action="../login/login_request/" method="post">
+    <table>
+        <tr><td>firstname:</td><td><input type="text" name="firstname" label="firstname" id="firstname" value="{{ firstname }}" /></td></tr>
+        <tr><td>lastname:</td><td><input type="text" name="lastname" label="lastname" id="lastname" value="{{ lastname }}" /></td></tr>
+        <tr><td>firstname:</td><td><input type="text" name="password" label="password" id="password" value="{{ password }}" /></td></tr>
+    <table>
+<input type="submit" value="Login!" />
+</form>
