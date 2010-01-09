@@ -21,7 +21,7 @@ from logging import getLogger
 from webob import Request, Response
 
 # related
-from indra.base import llsd
+from llbase import llsd
 from eventlet import util
 
 # the following makes socket calls nonblocking. magic
