@@ -33,8 +33,8 @@ from llbase import llsd
 from eventlet import api
 
 # pyogp.lib.base
-from pyogp.apps.viewer_proxy.lib.caps_proxy import CapabilitiesProxy
-from pyogp.apps.viewer_proxy.lib.udpproxy import UDPProxy
+from pyogp.apps.proxy.lib.caps_proxy import CapabilitiesProxy
+from pyogp.apps.proxy.lib.udpproxy import UDPProxy
 
 # pyogp.lib.client
 from pyogp.lib.client.login import Login
