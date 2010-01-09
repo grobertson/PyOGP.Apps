@@ -29,7 +29,7 @@ from wsgiref.simple_server import make_server
 import xmlrpclib
 
 # related
-from indra.base import llsd
+from llbase import llsd
 from eventlet import api
 
 # pyogp.lib.base
