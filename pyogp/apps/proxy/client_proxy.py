@@ -43,7 +43,7 @@ from pyogp.lib.client.login import Login
 logger = logging.getLogger('pyogp.apps.examples.proxy')
 
 class ViewerProxyApp(object):
-    """ proxies a login request from a Second Life viewer """
+    """ application class which drives the proxying of all client <-> region interactions """
 
     def __init__(self, loginuri, login_port, proxy_udp=True, proxy_caps=True):
 
@@ -54,11 +54,16 @@ class ViewerProxyApp(object):
         self.proxy_caps = proxy_caps
 
         self._is_running = True
+        self.retry_login = False
 
         # let the login req proxy handle the first signal
         self.signal_handler = None
 
     def start_udp_proxy(self, sim_ip, sim_port):
+        """
+        start a udp proxy, spawning two sockets which serve as the 
+        faux region and faux client
+        """
 
         # signal handler to capture erm signals
         if not self.signal_handler:
@@ -76,6 +81,7 @@ class ViewerProxyApp(object):
         return self.udp_proxy.hostname, self.udp_proxy.proxy_socket.getsockname()[1]
 
     def start_caps_proxy(self, seed_cap_url, caps_proxy_port=None):
+        """ start a caps proxy, serving the seed_cap first then all subsequent caps """
 
         # signal handler to capture erm signals
         if not self.signal_handler:
@@ -103,24 +109,14 @@ class ViewerProxyApp(object):
             sys.exit()
         except:
             traceback.print_exc()
-        '''
-        
-        while self._is_running:
-            api.sleep(0)
-            try:
-                httpd.handle_request()
-            except KeyboardInterrupt:
-                sys.exit()
-            except:
-                traceback.print_exc()
-        '''
 
-
-    def proxy_login(self):
+    def proxy_login(self, httpd=None):
+        """ handle a login request, call again if the login failed """
 
         # init the login proxy
         login_proxy = LoginHandler(self)
-        httpd = make_server('127.0.0.1', self.login_port, login_proxy)
+        if not httpd:
+            httpd = make_server('127.0.0.1', self.login_port, login_proxy)
 
         try:
             httpd.handle_request()
@@ -128,6 +124,10 @@ class ViewerProxyApp(object):
             sys.exit()
         except:
             traceback.print_exc()
+
+        if self.retry_login:
+            logger.warning("Login failed, re-initializing the login proxy.")
+            self.proxy_login(httpd)
 
     def sigint_handler(self, signal_sent, frame):
         """ catches terminal signals (Ctrl-C) to kill running client instances """
@@ -139,6 +139,10 @@ class ViewerProxyApp(object):
         self._is_running = False
 
 class LoginHandler(object):
+    """
+    handles a Second Life login request from a client
+    swaps proxy ips and ports in place of real ones where necessary
+    """
 
     def __init__(self, caller):
 
@@ -151,38 +155,42 @@ class LoginHandler(object):
         logger.info("Proxying login requests for %s on https://127.0.0.1:%s" % (self.loginuri, self.port))
 
     def __call__(self, environ, start_response, ):
+        """ parse and proxy the request, return a response to the caller """
 
         self.environ = environ
         self.start = start_response
-
         self.request = Request(environ)
-
         self.response = Response()
+
+        # reset the login lock
+        self.caller.retry_login = False
 
         try:
             login_params = xmlrpclib.loads(self.request.body)
 
             response = self.login_handler._post_to_legacy_loginuri(self.loginuri, login_params = login_params[0][0], login_method = login_params[1], proxied = True)
 
-            #logger.debug("Login response is: %s" % (response))
+            #logger.debug("Unmodified login response is: %s" % (response))
 
+            # if the login authed fine, swap out ip:port, seed_cap with local proxies
+            # otherwise, re-init the login handler
             if response['login'] == 'true':
-                sim_ip = copy.copy(response['sim_ip'])  # swap out with localhost
-                sim_port = copy.copy(response['sim_port'])  # swap out with a local port
-                seed_cap = copy.copy(response['seed_capability'])   # swap out the seed cap with a localhost url
+                sim_ip = copy.copy(response['sim_ip'])
+                sim_port = copy.copy(response['sim_port'])
+                seed_cap = copy.copy(response['seed_capability'])
 
                 if self.caller.proxy_udp:
-                    # get ports from the calling app to replace in the login response to the viewer
+
                     (local_ip, local_port) = self.caller.start_udp_proxy(sim_ip, sim_port)
                     
                     response['sim_ip'] = local_ip
                     response['sim_port'] = local_port
-                    
-                    #logger.debug("Replacing login response sim_ip:sim_port %s:%s with proxy of %s:%s" %  (sim_ip, sim_port, response['sim_ip'], response['sim_port']))
                 
                 if self.caller.proxy_caps:
                     (local_ip, local_port, path) = self.caller.start_caps_proxy(seed_cap)
                     response['seed_capability'] = "http://%s:%s/%s" % (local_ip, local_port, path)
+            else:
+                self.caller.retry_login = True
                     
             logger.debug("Transformed login response is: %s" % (response))
 
@@ -197,8 +205,6 @@ class LoginHandler(object):
             return self.response(environ, start_response)
 
 def main():
-
-    logger.debug("This script is only proxying logins right now.")
 
     parser = optparse.OptionParser(
         usage='%prog --port=PORT'
@@ -248,8 +254,10 @@ def main():
     # init the viewer proxy
     viewer_proxy = ViewerProxyApp(options.loginuri, options.login_port)
 
+    # spawn a coroutine which initially handles the login rpxy, then lives on
     api.spawn(viewer_proxy.proxy_login)
 
+    # keep running until we intercept a signal
     while viewer_proxy._is_running:
         api.sleep(5)
 
