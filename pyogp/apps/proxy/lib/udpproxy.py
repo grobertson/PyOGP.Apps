@@ -36,10 +36,13 @@ class UDPProxy(UDPDispatcher):
     def __init__(self, sim_ip, sim_port, viewer_facing_port, target_facing_port, udp_client = None, settings = None, message_handler = None, message_template = None, message_xml = None):
         """ initialize a UDP proxy, extending the UDPDispatcher """
 
+        # we are extending the standard UDPDispatcher
         super(UDPProxy, self).__init__(udp_client, settings, message_handler, message_template, message_xml)
 
+        # tell the backend to keep quiet
         self.settings.PROXY_LOGGING = True
-        self.settings.ENABLE_DEFERRED_PACKET_PARSING = False # ToDo: remove this
+        # ToDo: remove this, use the message_handler to get at data instead
+        self.settings.ENABLE_DEFERRED_PACKET_PARSING = False 
     
         self.target_host = Host((sim_ip, sim_port))
         self.local_host = None
@@ -60,15 +63,15 @@ class UDPProxy(UDPDispatcher):
 
         self.local_host = Host((self.hostname, viewer_facing_port)) # populate this convenience reference
 
-        #logger.debug("Bound proxy for region %s to %s" % (self.target_host, self.target_socket.getsockname()))
-        #logger.debug("Bound proxy for viewer (%s) to %s" % (self.local_host, self.proxy_socket.getsockname()))
         logger.info("Initialized the UDPProxy for %s" % (self.target_host))
 
     def start_proxy(self):
-
-        logger.debug("Starting proxies in UDPProxy")
+        """ 
+        spawn two coroutines for processing the viewer facing and region
+        facing packet steams
+        """
         
-        api.sleep(2)
+        api.sleep(0)
 
         self._is_running = True
 
@@ -81,9 +84,14 @@ class UDPProxy(UDPDispatcher):
 
 
     def _send_viewer_to_sim(self):
+        """
+        reads from the proxy_socket we set up for the client to send messages to
+        writes to the ip:port the client is sending from
+        """
 
-        # todo: find a way to not try and send data we just received
-        self.proxy_socket_is_locked = False
+        # todo: this is only sending msg_buf off the socket onto the sim
+        #       we should serialize -> pyogp then serialize from there to binary
+        #       then we can intercept and manipulate
 
         while self._is_running:
 
@@ -93,6 +101,7 @@ class UDPProxy(UDPDispatcher):
                 self.viewer_address = self.proxy_udp_client.get_sender()
 
             if msg_size > 0:
+                # try and parse the message via pyogp, sending on regardless of success
                 try:
                     recv_packet = self.receive_check(self.proxy_udp_client.get_sender(),
                                                                     msg_buf, 
@@ -112,12 +121,21 @@ class UDPProxy(UDPDispatcher):
             api.sleep(0)
 
     def _receive_sim_to_viewer(self):
+        """
+        reads from the target_socket we set up for the proxy to send messages from
+        writes to the ip:port the of the endpoint region
+        """
+
+        # todo: this is only sending msg_buf off the socket onto the sim
+        #       we should serialize -> pyogp then serialize from there to binary
+        #       then we can intercept and manipulate
 
         while self._is_running:
 
             msg_buf, msg_size = self.target_udp_client.receive_packet(self.target_socket)
 
             if msg_size > 0:
+                # try and parse the message via pyogp, sending on regardless of success
                 try:
                     recv_packet = self.receive_check(self.target_udp_client.get_sender(),
                                                                 msg_buf, 
