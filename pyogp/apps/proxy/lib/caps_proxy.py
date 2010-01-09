@@ -33,7 +33,7 @@ from pyogp.lib.base.event_queue import EventQueueClient
 from pyogp.lib.base.exc import DataParsingError, HTTPError
 
 # initialize logging
-logger = getLogger('pyogp.lib.base.caps_proxy')
+logger = getLogger('client_proxy.lib.caps_proxy')
 
 class CapabilitiesProxy(object):
     """ an application class for wsgiref.simple_server which handles 

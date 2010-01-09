@@ -28,7 +28,7 @@ from pyogp.lib.base.message.udpdispatcher import UDPDispatcher
 from pyogp.lib.base.network.net import NetUDPClient
 
 # initialize logging
-logger = getLogger('message.udpproxy')
+logger = getLogger('client_proxy.lib.udpproxy')
 
 class UDPProxy(UDPDispatcher):
     """ proxies a Second Life viewer's UDP connection to a region """

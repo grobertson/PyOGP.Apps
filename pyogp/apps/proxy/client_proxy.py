@@ -69,8 +69,6 @@ class ViewerProxyApp(object):
         if not self.signal_handler:
             self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
 
-        logger.debug("ViewerProxyApp is spawning UDP proxies for %s:%s" % (sim_ip, sim_port))
-
         viewer_facing_port = random.randrange(14001, 15000)
         server_facing_port = random.randrange(15001, 16000)
 
@@ -86,9 +84,6 @@ class ViewerProxyApp(object):
         # signal handler to capture erm signals
         if not self.signal_handler:
             self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
-        
-        logger.debug("ViewerProxyApp is spawning caps proxies for region with\
-                        seed_capability of %s" % (seed_cap_url))
 
         if not caps_proxy_port:
             caps_proxy_port = random.randrange(16001, 17001)
