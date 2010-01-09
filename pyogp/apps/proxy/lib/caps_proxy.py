@@ -85,7 +85,7 @@ class CapabilitiesProxy(object):
                     (self.seed_cap_url))
 
     def add_proxy(self, url, capname):
-        """ adds the url and it's proxy, and the proxy and it's url"""
+        """ adds the url and it's proxy, and the proxy and it's url """
 
         # make available UUID <-> url dicts
         # we map each since the pairs are unique
@@ -103,7 +103,7 @@ class CapabilitiesProxy(object):
         return uuid
 
     def remove_proxy(self, proxied):
-        """ removes the url and it's proxy, and the proxy and it's url"""
+        """ removes the url and it's proxy, and the proxy and it's url """
 
         val = self.proxy_map[proxied]
         
@@ -140,7 +140,7 @@ class CapabilitiesProxy(object):
         return cap_map
 
     def __call__(self, environ, start_response):
-        """ handle a specific cap request and response using webob objects"""
+        """ handle a specific cap request and response using webob objects """
 
         self.environ = environ
         self.start = start_response
@@ -184,6 +184,7 @@ class CapabilitiesProxy(object):
                 data = llsd.format_xml(cap_map)
 
             # if we are parsing the event queue, decode the data
+            # this also runs it through the message_handler!
             # then curry it on out 
             elif self.proxy_map[self.request.path[1:]] == self.event_queue_url:
                 
@@ -191,6 +192,8 @@ class CapabilitiesProxy(object):
                 data = proxy_response.body
 
             # otherwise, just proxy the data
+            # normal caps go through no message_handler.
+            # todo: fix the above (is a pyogp.lib.base fix)
             else:
 
                 data = proxy_response.body
@@ -204,7 +207,7 @@ class CapabilitiesProxy(object):
 
 
     def send_response(self, status, body=''):
-        """ send the response back to the caller """
+        """ send the web response back to the caller """
 
         logger.debug("Sending cap response to viewer: Status:%s Body:%s" % (status, body))
 
