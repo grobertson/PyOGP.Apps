@@ -95,116 +95,24 @@ def login():
     while client.region.connected == False:
         api.sleep(0)
 
-    AgentLocationFinder(client, region_name)
 
+    def got_clusters(cluster_list):
+        if len(cluster_list):
+            for count, x, y in cluster_list:
+                print "count: %d at %d, %d" % (count, x, y)
+        else:
+            print "No agents present"
+        client.logout()
+
+    def got_handle(handle):
+        client.map_service.request_agent_locations(handle, got_clusters)
+
+    client.map_service.request_handle(region_name, got_handle)
+        
     while client.running:
         api.sleep(0)
 
 
-
-def region_name_to_handle_x_y(client, region_name, callback):
-    handler = client.region.message_handler.register('MapBlockReply')
-
-    def onMapBlockReplyPacket(packet):
-        """ handles the MapBlockReply message from a simulator """
-
-        for data in packet['Data']:
-
-            if data['Name'].lower() == region_name.lower():
-
-                # Stop listening once we have the data we asked for
-                handler.unsubscribe(onMapBlockReplyPacket)
-
-                region_handle = Region.xy_to_handle(data['X'], data['Y'])
-
-                callback(region_handle, data['X'], data['Y'])
-                return
-
-        # Keep listening, as the event may come later
-
-    # Register a handler for the response        
-    handler.subscribe(onMapBlockReplyPacket)
-
-    packet = Message('MapNameRequest', 
-                    Block('AgentData', 
-                        AgentID = client.agent_id, 
-                        SessionID = client.session_id,
-                        Flags = 0,
-                        EstateID = 0, # filled in on server
-                        Godlike = False), # filled in on server
-                    Block('NameData',
-                        Name = region_name.lower()))
-
-    client.region.enqueue_message(packet) 
-
-
-MAP_ITEM_TELEHUB = 0x01;
-MAP_ITEM_PG_EVENT = 0x02;
-MAP_ITEM_MATURE_EVENT = 0x03;
-#MAP_ITEM_POPULAR = 0x04;
-#MAP_ITEM_AGENT_COUNT = 0x05;
-MAP_ITEM_AGENT_LOCATIONS = 0x06;
-MAP_ITEM_LAND_FOR_SALE = 0x07;
-MAP_ITEM_CLASSIFIED = 0x08;
-MAP_ITEM_ADULT_EVENT = 0x09;
-MAP_ITEM_LAND_FOR_SALE_ADULT = 0x0a;
-
-
-REGION_WIDTH = 256
-
-class AgentLocationFinder:
-
-    def __init__(self, client, region_name):
-        self.client = client
-        self.region_name = region_name
-        self.region_handle = None
-        self.region_x = None
-        self.region_y = None
-
-        handler = self.client.region.message_handler.register('MapItemReply')
-        handler.subscribe(self.onMapItemReply)
-
-        region_name_to_handle_x_y(self.client, region_name, self.onRegionHandle)
-
-    def onRegionHandle(self, region_handle, x, y):
-        self.region_handle = region_handle
-        self.region_x = x
-        self.region_y = y
-
-        if region_handle:
-
-            packet = Message('MapItemRequest', 
-                             Block('AgentData', 
-                                   AgentID = self.client.agent_id, 
-                                   SessionID = self.client.session_id,
-                                   Flags = 0,
-                                   EstateID = 0, # filled in on server
-                                   Godlike = False), # filled in on server
-                             Block('RequestData',
-                                   ItemType = MAP_ITEM_AGENT_LOCATIONS,
-                                   RegionHandle = region_handle))
-
-            self.client.region.enqueue_message(packet)
-
-        else:
-            print "Unable to find region handle for:", self.region_name
-
-
-    def onMapItemReply(self, packet):
-        #print "Got map item reply:", packet
-        item_type = packet['RequestData'][0]['ItemType']
-        if item_type == MAP_ITEM_AGENT_LOCATIONS:
-            for data in packet['Data']:
-                x = data['X']
-                y = data['Y']
-                count = data['Extra']
-
-                if int(x/REGION_WIDTH) == self.region_x and int(y/REGION_WIDTH) == self.region_y:
-
-                    if count:
-                        print "%d agent(s) at %d, %d" % (count, x % REGION_WIDTH, y % REGION_WIDTH)
-                    else:
-                        print "No agents present"
                     
 
 def main():
