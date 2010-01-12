@@ -107,8 +107,9 @@ class UDPProxy(UDPDispatcher):
                                                                     msg_buf, 
                                                                     msg_size)
 
-                    logger.info("Sending message:%s ID:%s" % (recv_packet.name, recv_packet.packet_id))
-                    logger.debug(recv_packet) # ToDo: make this optionally llsd logging once that's in
+                    logger.info("Sending message:%s to %s. ID:%s" % (recv_packet.name, self.target_host, recv_packet.packet_id))
+                    logger.debug(recv_packet.to_dict()) # ToDo: make this optionally llsd logging once that's in
+                    #logger.debug(recv_packet.as_llsd()) # ToDo: make this optionally llsd logging once that's in
                 except Exception, error:
                     logger.error("Problem handling viewer to sim proxy: %s." % (error))
                     traceback.print_exc()
@@ -141,8 +142,8 @@ class UDPProxy(UDPDispatcher):
                                                                 msg_buf, 
                                                                 msg_size)
 
-                    logger.info("Receiving message:%s ID:%s" % (recv_packet.name, recv_packet.packet_id))
-                    logger.debug(recv_packet) # ToDo: make this optionally llsd logging once that's in
+                    logger.info("Receiving message:%s to %s (the client). ID:%s" % (recv_packet.name, self.viewer_address, recv_packet.packet_id))
+                    logger.debug(recv_packet.to_dict()) # ToDo: make this optionally llsd logging once that's in
                 except Exception, error:
                     logger.warning("Problem trying to handle sim to viewer proxy : %s" % (error))
                     traceback.print_exc()
