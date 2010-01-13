@@ -22,11 +22,11 @@ log = logging.getLogger('map_item_request')
 def login():
     """ login an to a login endpoint """ 
 
-    parser = OptionParser(usage="usage: %prog [options] firstname lastname regionname")
+    parser = OptionParser(usage="usage: %prog [options] firstname lastname query")
 
     logger = logging.getLogger("client.example")
 
-    parser.add_option("-l", "--loginuri", dest="loginuri", default="https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
+    parser.add_option("-l", "--loginuri", dest="loginuri", default="https://login.agni.lindenlab.com/cgi-bin/login.cgi",
                       help="specified the target loginuri")
     parser.add_option("-r", "--region", dest="region", default=None,
                       help="specifies the region (regionname/x/y/z) to connect to")
@@ -96,18 +96,16 @@ def login():
         api.sleep(0)
 
 
-    def got_clusters(cluster_list):
-        if len(cluster_list):
-            for count, x, y in cluster_list:
-                print "count: %d at %d, %d" % (count, x, y)
+    def got_results(results):
+        if len(results):
+            for region in results:
+                print "%s (%d, %d)" % (region['name'], region['x'], region['y'])
         else:
-            print "No agents present"
+            print "No results"
         client.logout()
+                
 
-    def got_handle(handle):
-        client.map_service.request_agent_locations(handle, got_clusters)
-
-    client.map_service.request_handle(region_name, got_handle)
+    client.map_service.search(region_name, got_results)
         
     while client.running:
         api.sleep(0)
