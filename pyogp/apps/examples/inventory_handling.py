@@ -34,7 +34,7 @@ def login():
 
     if len(args) != 2:
         parser.error("Expected arguments: firstname lastname")
-                
+
     if options.verbose:
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG) # seems to be a no op, set it for the logger

@@ -39,7 +39,7 @@ class Semaphore(object):
     """
     waiting = True
     timed_out = False
-    
+
     def wait(self, time_out=0):
         start = now = time.time()
         while self.waiting and now - start <= time_out:
@@ -48,7 +48,7 @@ class Semaphore(object):
         if now - start > time_out:
             self.timed_out = True
         self.waiting = True
-        
+
     def signal(self):
         self.waiting = False
 
@@ -111,9 +111,9 @@ def login():
     [client.inventory._request_folder_contents(folder.FolderID) \
      for folder in client.inventory.folders if folder.ParentID == \
      client.inventory.inventory_root.FolderID]
-    
+
     api.sleep(10)
-    
+
     for attr in client.__dict__:
         print attr, ':\t\t\t',  client.__dict__[attr]
 
@@ -125,8 +125,8 @@ class TestServer(unittest.TestCase):
 
     def tearDown(self):
         api.sleep(3)
-    
-                
+
+
     def test_im(self):
         """
         Tests im by sending an im to self and verify it is received
@@ -141,7 +141,7 @@ class TestServer(unittest.TestCase):
         client.instant_message(client.agent_id, "Smoke Test message")
         s.wait(30)
         self.assertFalse(s.timed_out)
-    
+
     def test_chat(self):
         """
         Tests chat sending a global chat and verify that it is received.
@@ -156,7 +156,7 @@ class TestServer(unittest.TestCase):
         client.say(msg)
         s.wait(30)
         self.assertFalse(s.timed_out)
-    
+
     def test_create_object(self):
         """
         Tests object creation by rezzing a new prim, selecting it, and
@@ -177,7 +177,7 @@ class TestServer(unittest.TestCase):
                        transaction_id,
                        client.active_group_id)
             s.signal()
-    
+
         object_handler.subscribe(object_created)
         client.region.objects.create_default_box()
         s.wait(30)
@@ -222,7 +222,7 @@ class TestServer(unittest.TestCase):
         matches = client.inventory.search_inventory(client.inventory.folders,
                                                     name=item_name)
         self.assertTrue(len(matches) == 0)
-        
+
     '''
     def test_wear_something(self):
         """

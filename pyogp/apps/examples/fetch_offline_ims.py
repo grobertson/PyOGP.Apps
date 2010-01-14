@@ -40,8 +40,8 @@ def login():
         parser.error("Expected 2 arguments")
 
     (firstname, lastname) = args
-    
-                
+
+
     console = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
     console.setFormatter(formatter)

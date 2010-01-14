@@ -44,7 +44,7 @@ def login():
 
     if options.executable == None:
         parser.error("Missing required executable to run")
-        
+
     try:
         f = open(options.file, 'r')
         data = f.readlines()

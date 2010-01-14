@@ -33,7 +33,7 @@ def login():
 
     if len(args) != 2:
         parser.error("Expected arguments: firstname lastname")
-        
+
     if options.verbose:
         console = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
@@ -71,7 +71,7 @@ def login():
         api.sleep(0)
 
     # do sample script specific stuff here
-    
+
     # set up callbacks if they come in handy
     im_handler = client.events_handler.register('InstantMessageReceived')
     im_handler.subscribe(chat_handler)

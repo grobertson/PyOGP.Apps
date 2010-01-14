@@ -40,8 +40,8 @@ def login():
         parser.error("Expected 2 arguments")
 
     (firstname, lastname) = args
-    
-                
+
+
     console = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
     console.setFormatter(formatter)
@@ -130,13 +130,13 @@ def fetch_voice_info(client, callback=None):
             print >> sys.stderr, "Exception requesting parcel voice info: %s" % (str(error))
             callback(account_info, None)
             return
-        
+
         if callback:
             callback(account_info, parcel_info)
 
 
     api.spawn(_request_voice_info)
-    
+
 
 
 def main():

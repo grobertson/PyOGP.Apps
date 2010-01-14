@@ -49,7 +49,7 @@ class ViewerProxyApp(object):
 
         self.loginuri = loginuri
         self.login_port = login_port
-        
+
         self.proxy_udp = proxy_udp
         self.proxy_caps = proxy_caps
 
@@ -59,51 +59,80 @@ class ViewerProxyApp(object):
         # let the login req proxy handle the first signal
         self.signal_handler = None
 
+        # tracks the ip:port combos we know about
+        self.udp_proxied_hosts = {}
+
+        # list of all the running udp_proxy instances
+        self.udp_proxies = []
+
+        # tracks the ip:port combos we know about
+        self.caps_proxied_hosts = {}
+
+        # tracks the seed_caps which we spawned a CapsProxy for
+        self.caps_proxies = []
+
+        # seed the base udp port range
+        self.viewer_facing_port_seed = random.randrange(14001, 15000)
+        self.server_facing_port_seed = random.randrange(15001, 16000)
+        self.caps_proxy_port_seed = random.randrange(16001, 17001)
+
     def start_udp_proxy(self, sim_ip, sim_port):
         """
         start a udp proxy, spawning two sockets which serve as the 
         faux region and faux client
         """
 
+        # if we are already running a proxy for this, simply pass it's location back out
+        if (sim_ip, sim_port) in self.udp_proxied_hosts:
+            logger.debug("UDPProxy already exists for %s:%s at %s:%s" % (
+                            sim_ip,
+                            sim_port,
+                            self.udp_proxied_hosts[(sim_ip, sim_port)][0],
+                            self.udp_proxied_hosts[(sim_ip, sim_port)][1]))
+            return self.udp_proxied_hosts[(sim_ip, sim_port)][0], self.udp_proxied_hosts[(sim_ip, sim_port)][1]
+
         # signal handler to capture erm signals
         if not self.signal_handler:
             self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
 
-        viewer_facing_port = random.randrange(14001, 15000)
-        server_facing_port = random.randrange(15001, 16000)
+        self.viewer_facing_port_seed += 1
+        self.server_facing_port_seed += 1
 
-        self.udp_proxy = UDPProxy(sim_ip, sim_port, viewer_facing_port, server_facing_port)
-        
-        api.spawn(self.udp_proxy.start_proxy)
+        udp_proxy = UDPProxy(sim_ip, sim_port, self.viewer_facing_port_seed, self.server_facing_port_seed)
 
-        return self.udp_proxy.hostname, self.udp_proxy.proxy_socket.getsockname()[1]
+        # populate our trackers
+        self.udp_proxied_hosts[(sim_ip, sim_port)] = (udp_proxy.hostname, udp_proxy.proxy_socket.getsockname()[1])
+        self.udp_proxies.append(udp_proxy)
 
-    def start_caps_proxy(self, seed_cap_url, caps_proxy_port=None):
+        api.spawn(udp_proxy.start_proxy)
+
+        return udp_proxy.hostname, udp_proxy.proxy_socket.getsockname()[1]
+
+    def start_caps_proxy(self, seed_cap_url):
         """ start a caps proxy, serving the seed_cap first then all subsequent caps """
 
+        # if we are already running a proxy for this, simply pass it's location back out
+        if (seed_cap_url) in self.caps_proxied_hosts:
+            logger.debug("CapabilitiesProxy already exists for %s at %s" % (
+                            seed_cap_url,
+                            self.proxied_hosts[seed_cap_url]))
+            return self.udp_proxied_hosts[(sim_ip, sim_port)][0], self.udp_proxied_hosts[(sim_ip, sim_port)][1]
+
         # signal handler to capture erm signals
         if not self.signal_handler:
             self.signal_handler = signal.signal(signal.SIGINT, self.sigint_handler)
 
-        if not caps_proxy_port:
-            caps_proxy_port = random.randrange(16001, 17001)
+        self.caps_proxy_port_seed +=1
 
-        self.caps_proxy = CapabilitiesProxy(seed_cap_url, '127.0.0.1', caps_proxy_port)
+        caps_proxy = CapabilitiesProxy(seed_cap_url, '127.0.0.1', self.caps_proxy_port_seed, self)
 
-        api.spawn(self.start_caps_proxy_service, '127.0.0.1', caps_proxy_port, self.caps_proxy)
+        # populate our trackers
+        self.caps_proxied_hosts[seed_cap_url] = "%s:%s" % ('http://127.0.0.1', self.caps_proxy_port_seed)
+        self.caps_proxies.append(caps_proxy)
 
-        return '127.0.0.1', caps_proxy_port, self.caps_proxy.proxy_map[seed_cap_url]
+        api.spawn(caps_proxy.start_caps_proxy_service)
 
-    def start_caps_proxy_service(self, caps_proxy_ip, caps_proxy_port, app):
-
-        httpd = make_server(caps_proxy_ip, caps_proxy_port, self.caps_proxy)
-        
-        try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            sys.exit()
-        except:
-            traceback.print_exc()
+        return '127.0.0.1', self.caps_proxy_port_seed, caps_proxy.proxy_map[seed_cap_url]
 
     def proxy_login(self, httpd=None):
         """ handle a login request, call again if the login failed """
@@ -128,9 +157,10 @@ class ViewerProxyApp(object):
         """ catches terminal signals (Ctrl-C) to kill running client instances """
 
         logger.warning("Caught signal... %d. Stopping" % signal_sent)
-        
-        if hasattr(self, 'udp_proxy'):
-            self.udp_proxy._is_running = False
+
+        if hasattr(self, 'proxies'):
+            for proxy in self.proxies:
+                proxy._is_running = False
         self._is_running = False
 
 class LoginHandler(object):
@@ -177,16 +207,16 @@ class LoginHandler(object):
                 if self.caller.proxy_udp:
 
                     (local_ip, local_port) = self.caller.start_udp_proxy(sim_ip, sim_port)
-                    
+
                     response['sim_ip'] = local_ip
                     response['sim_port'] = local_port
-                
+
                 if self.caller.proxy_caps:
                     (local_ip, local_port, path) = self.caller.start_caps_proxy(seed_cap)
                     response['seed_capability'] = "http://%s:%s/%s" % (local_ip, local_port, path)
             else:
                 self.caller.retry_login = True
-                    
+
             logger.debug("Transformed login response is: %s" % (response))
 
             tuple_response = tuple([response])

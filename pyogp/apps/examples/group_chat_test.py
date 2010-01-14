@@ -45,8 +45,8 @@ def login():
         parser.error("Expected 3 arguments")
 
     (firstname, lastname, groupname) = args
-    
-                
+
+
     console = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
     console.setFormatter(formatter)
@@ -104,7 +104,7 @@ def login():
         log.error("No such group: '%s'", groupname)
         sys.exit(-1)
     group = group[0]
-    
+
     if options.message:
         group.chat(options.message)
 
@@ -116,7 +116,7 @@ def login():
             print group.chat_history[c:]
             c = len(group_chat_history)
 
-    
+
 
 
 

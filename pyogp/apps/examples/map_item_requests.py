@@ -46,8 +46,8 @@ def login():
         parser.error("Expected 3 arguments")
 
     (firstname, lastname, region_name) = args
-    
-                
+
+
     console = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
     console.setFormatter(formatter)
@@ -205,7 +205,7 @@ class AgentLocationFinder:
                         print "%d agent(s) at %d, %d" % (count, x % REGION_WIDTH, y % REGION_WIDTH)
                     else:
                         print "No agents present"
-                    
+
 
 def main():
     return login()    

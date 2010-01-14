@@ -55,4 +55,3 @@ def login_request(request, firstname = None, lastname = None, password = None, e
 
         return HttpResponse('would like to show the login form again, with any error message that\'s appropriate, like: %s' % (error_message))
         #return HttpResponseRedirect(reverse('pyogp_webbot.login.views.login', kwargs={'firstname':firstname, 'lastname':lastname, 'error_message':error_message}))
-    

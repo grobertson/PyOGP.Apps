@@ -43,7 +43,7 @@ class UDPProxy(UDPDispatcher):
         self.settings.PROXY_LOGGING = True
         # ToDo: remove this, use the message_handler to get at data instead
         self.settings.ENABLE_DEFERRED_PACKET_PARSING = False 
-    
+
         self.target_host = Host((sim_ip, sim_port))
         self.local_host = None
         self.viewer_address = None
@@ -57,20 +57,20 @@ class UDPProxy(UDPDispatcher):
         self.proxy_socket = self.proxy_udp_client.start_udp_connection() # grab a socket!
         self.proxy_socket.bind((socket.gethostname(), viewer_facing_port)) # bind it to a port
         self.proxy_socket.setblocking(0) # set the socket to nonblocking
-      
+
         # the viewer needs a local hostname to connect to, as well as a port
         self.hostname = self.proxy_socket.getsockname()[0]
 
         self.local_host = Host((self.hostname, viewer_facing_port)) # populate this convenience reference
 
-        logger.info("Initialized the UDPProxy for %s" % (self.target_host))
+        logger.info("Initialized the UDPProxy for %s at %s" % (self.target_host, self.local_host))
 
     def start_proxy(self):
         """ 
         spawn two coroutines for processing the viewer facing and region
         facing packet steams
         """
-        
+
         api.sleep(0)
 
         self._is_running = True
@@ -96,7 +96,7 @@ class UDPProxy(UDPDispatcher):
         while self._is_running:
 
             msg_buf, msg_size = self.proxy_udp_client.receive_packet(self.proxy_socket)
-        
+
             if not self.viewer_address:
                 self.viewer_address = self.proxy_udp_client.get_sender()
 
@@ -109,16 +109,16 @@ class UDPProxy(UDPDispatcher):
 
                     logger.info("Sending message:%s to %s. ID:%s" % (recv_packet.name, self.target_host, recv_packet.packet_id))
                     logger.debug(recv_packet.to_dict()) # ToDo: make this optionally llsd logging once that's in
-                    #logger.debug(recv_packet.as_llsd()) # ToDo: make this optionally llsd logging once that's in
+
                 except Exception, error:
                     logger.error("Problem handling viewer to sim proxy: %s." % (error))
                     traceback.print_exc()
-        
+
                 self.target_udp_client.send_packet(self.target_socket, 
                                                     msg_buf, 
                                                     self.target_host)
 
-                
+
             api.sleep(0)
 
     def _receive_sim_to_viewer(self):
@@ -144,13 +144,18 @@ class UDPProxy(UDPDispatcher):
 
                     logger.info("Receiving message:%s to %s (the client). ID:%s" % (recv_packet.name, self.viewer_address, recv_packet.packet_id))
                     logger.debug(recv_packet.to_dict()) # ToDo: make this optionally llsd logging once that's in
+                    
+                    self.send_message(recv_packet, self.viewer_address)
+                    logger.debug("I'm here!!!!!!!!!!!!")
+
                 except Exception, error:
                     logger.warning("Problem trying to handle sim to viewer proxy : %s" % (error))
                     traceback.print_exc()
-            
-                self.proxy_udp_client.send_packet(self.proxy_socket,
-                                                    msg_buf,
-                                                    self.viewer_address)
+
+                #self.proxy_udp_client.send_packet(self.proxy_socket,
+                #                                    msg_buf,
+                #                                    self.viewer_address)
 
                 
+
             api.sleep(0)

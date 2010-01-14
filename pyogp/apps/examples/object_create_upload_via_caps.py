@@ -36,7 +36,7 @@ def login():
 
     if len(args) != 2:
        parser.error("Expected arguments: firstname lastname")
-              
+
     if options.verbose:
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG) # seems to be a no op, set it for the logger
@@ -129,7 +129,7 @@ default
                                     AssetType.Notecard, InventoryType.Notecard,
                                     WearablesIndex.WT_SHAPE, 0,
                                     lambda item: client.asset_manager.upload_notecard_via_caps(item.ItemID, "This is a test of the emergency notecard system."))
-    
+
     while client.running:
         api.sleep(0)
 

@@ -36,7 +36,7 @@ def login():
 
     if len(args) != 2:
        parser.error("Expected arguments: firstname lastname")
-              
+
     if options.verbose:
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG) # seems to be a no op, set it for the logger
@@ -138,9 +138,9 @@ default
 
     #rezzes a prim, and automatically selects it
     client.region.objects.create_default_box(GroupID = client.ActiveGroupID)
-    
-    
-    
+
+
+
     while client.running:
         api.sleep(0)
 
@@ -186,7 +186,7 @@ default
         print attr, ':\t\t\t',  client.region.__dict__[attr]
 
 
-    
+
 
 def main():
     return login()

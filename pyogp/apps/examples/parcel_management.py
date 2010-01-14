@@ -33,7 +33,7 @@ def login():
 
     if len(args) != 2:
         parser.error("Expected arguments: firstname lastname")
-                
+
     if options.verbose:
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG) # seems to be a no op, set it for the logger
@@ -83,7 +83,7 @@ def login():
 
     # sample specific stuff
     # client.region.parcel_manager.request_current_parcel_properties()
-    
+
     client.region.parcel_manager.request_all_parcel_properties()
 
     # Wait for all parcel info to be received...

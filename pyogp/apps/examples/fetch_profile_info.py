@@ -40,8 +40,8 @@ def login():
         parser.error("Expected 3 arguments")
 
     (firstname, lastname, target_agent_id) = args
-    
-                
+
+
     console = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
     console.setFormatter(formatter)
@@ -121,8 +121,8 @@ def fetch_agent_properties(client, agent_id, callback=None):
                            AvatarID = UUID(agent_id)))
 
     client.region.enqueue_message(packet)
-    
-    
+
+
 
 
 
