@@ -22,11 +22,11 @@ log = logging.getLogger('map_item_request')
 def login():
     """ login an to a login endpoint """ 
 
-    parser = OptionParser(usage="usage: %prog [options] firstname lastname regionname")
+    parser = OptionParser(usage="usage: %prog [options] firstname lastname minx maxx miny maxy")
 
     logger = logging.getLogger("client.example")
 
-    parser.add_option("-l", "--loginuri", dest="loginuri", default="https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
+    parser.add_option("-l", "--loginuri", dest="loginuri", default="https://login.agni.lindenlab.com/cgi-bin/login.cgi",
                       help="specified the target loginuri")
     parser.add_option("-r", "--region", dest="region", default=None,
                       help="specifies the region (regionname/x/y/z) to connect to")
@@ -42,12 +42,12 @@ def login():
 
     (options, args) = parser.parse_args()
 
-    if len(args) != 3:
-        parser.error("Expected 3 arguments")
+    if len(args) != 6:
+        parser.error("Expected 6 arguments")
 
-    (firstname, lastname, region_name) = args
-
-
+    (firstname, lastname, minx, maxx, miny, maxy) = args
+    minx, maxx, miny, maxy = int(minx), int(maxx), int(miny), int(maxy)
+               
     console = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)-30s%(name)-30s: %(levelname)-8s %(message)s')
     console.setFormatter(formatter)
@@ -96,24 +96,16 @@ def login():
         api.sleep(0)
 
 
-    def got_clusters(cluster_list):
-        if len(cluster_list):
-            for count, x, y in cluster_list:
-                print "count: %d at %d, %d" % (count, x, y)
-        else:
-            print "No agents present"
-        client.logout()
+    def got_region(region):
+        print "%s (%d, %d)" % (region['name'], region['x'], region['y'])
 
-    def got_handle(handle):
-        client.map_service.request_agent_locations(handle, got_clusters)
-
-    client.map_service.request_handle(region_name, got_handle)
+    client.map_service.request_block(minx, maxx, miny, maxy, got_region)
         
     while client.running:
         api.sleep(0)
 
 
-
+                    
 
 def main():
     return login()    
